@@ -1,0 +1,10 @@
+# Partial evaluation: score everything that is finished while a later run (e.g.
+# label_smoothing) is still training. Same outputs as evaluate.yaml, but restricts
+# the fine-tune namespaces to the baseline + unweighted ablation. The control-study
+# and linear-probe passes always run. Re-run evaluate.yaml once all training is done
+# (it overwrites these CSVs with the complete set).
+experiment: evaluate
+training:
+  num_workers: 2   # evaluation is inference-only; keep low for small runtimes (e.g. T4 has 2 CPUs)
+evaluate:
+  finetune_run_names: [finetune, finetune_unweighted]

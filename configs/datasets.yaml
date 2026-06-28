@@ -1,0 +1,39 @@
+# Dataset registry and label space.
+#
+# The three shared soybean classes are the target task; their index order is
+# fixed and used everywhere. PlantVillage (38 classes) is used only for the
+# two-stage pretraining path and keeps its own label space.
+
+classes: [healthy, rust, frogeye_leaf_spot]
+num_classes_plantvillage: 38
+
+# Stratified split proportions, applied per class. The split seed is set in
+# default.yaml (split_seeds) so the partition is reproducible and can be varied.
+split:
+  train: 0.75
+  val:   0.10
+  test:  0.15
+
+# Folder names and label maps reflect the on-disk layout under data/raw/.
+datasets:
+  asdid:
+    display: ASDID
+    folder: ASDID
+    subfolders: [frogeye, healthy, soybean_rust]
+    class_map:
+      frogeye: frogeye_leaf_spot
+      healthy: healthy
+      soybean_rust: rust
+  mh:
+    display: MH
+    folder: MH-SoyaHealthVision
+    subfolders: [Healthy_Soyabean, Soyabean_Frog_Leaf_Eye, Soyabean_Rust]
+    class_map:
+      Healthy_Soyabean: healthy
+      Soyabean_Frog_Leaf_Eye: frogeye_leaf_spot
+      Soyabean_Rust: rust
+  plantvillage:
+    display: PlantVillage
+    folder: PlantVillage/raw/color
+    subfolders: null    # all 38 class folders
+    class_map: null     # folder names are the labels

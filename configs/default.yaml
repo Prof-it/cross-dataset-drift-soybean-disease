@@ -1,0 +1,64 @@
+# Base configuration: reproducibility, model space, training, evaluation.
+# Values follow the Paper 1 protocol (manuscript Table II). Experiment-specific
+# files under configs/experiments/ override individual keys; later files win.
+
+# Reproducibility ------------------------------------------------------------
+seeds: [73, 7, 21]           # training (init) seeds: weight init, shuffling, augmentation order
+split_seeds: [73, 7, 21]     # soybean data-partition seeds
+seed_design: cross           # 'cross' = full grid (split x init, 9 runs/model); 'diagonal' pairs split_seeds[i] with seeds[i]
+run_name: finetune           # checkpoint/results namespace for the fine-tune driver; variants override it (e.g. finetune_unweighted)
+plantvillage_split_seed: 73  # PlantVillage pretraining held fixed; stage-1 trained once per arch and reused
+
+# Model space (the 16 models = architectures x training_paths x source_datasets)
+architectures:
+  densenet201: { source: torchvision, model_name: densenet201,                           feature_dim: 1920 }
+  resnet50:    { source: torchvision, model_name: resnet50,                              feature_dim: 2048 }
+  vit_small:   { source: timm,        model_name: vit_small_patch16_224.augreg_in1k,     feature_dim: 384 }
+  vit_base:    { source: timm,        model_name: vit_base_patch16_224.augreg_in1k,      feature_dim: 768 }
+training_paths: [direct, twostage]   # direct: ImageNet -> target; twostage: ImageNet -> PlantVillage -> target
+source_datasets: [asdid, mh]
+
+# Input preprocessing --------------------------------------------------------
+preprocessing:
+  input_size: 224
+  resize_size: 256
+  mean: [0.485, 0.456, 0.406]   # ImageNet
+  std:  [0.229, 0.224, 0.225]
+  augmentation:                 # train split only; val/test are deterministic
+    rotation_degrees: 30
+    translate: [0.2, 0.2]
+    brightness: [0.9, 1.1]
+
+# Training -------------------------------------------------------------------
+training:
+  batch_size: 128
+  learning_rate: 1.0e-4
+  weight_decay: 1.0e-4
+  adam_betas: [0.9, 0.999]
+  max_epochs: 100
+  label_smoothing: 0.0        # > 0 enables the label-smoothing calibration intervention
+  class_weighting: true       # inverse-frequency class weights; false = unweighted-MH ablation (feedback #6)
+  amp: true                   # automatic mixed precision (CUDA only)
+  num_workers: 8
+  schedule:                   # ReduceLROnPlateau, stepped on validation loss
+    factor: 0.1
+    patience: 5
+    min_lr: 1.0e-7
+  early_stopping:             # monitored on validation loss
+    patience: 10
+    min_delta: 1.0e-3
+
+# Evaluation -----------------------------------------------------------------
+evaluation:
+  bootstrap_iterations: 10000   # bias-corrected and accelerated (BCa) confidence intervals
+  ece_bins: 10                  # expected calibration error
+
+# Figures (shared plotting style for both papers; applied via src.viz) --------
+figures:
+  dpi: 300
+  format: png                   # PNG for paper figures (sharp lines/text, no artifacts)
+  font_size: 10
+  palette:                      # fixed per-class colours (muted editorial: sage / ochre / plum)
+    healthy: "#6E9B7C"
+    rust: "#C9A24B"
+    frogeye_leaf_spot: "#8C6F9B"

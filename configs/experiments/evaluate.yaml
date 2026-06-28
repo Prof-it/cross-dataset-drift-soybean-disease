@@ -1,0 +1,7 @@
+# Evaluation: within/cross metrics, calibration (incl. temperature scaling),
+# the prevalence-vs-conditional decomposition, and per-model reliability bins.
+# Reads the finetune / control-study / linear-probe checkpoints and writes the
+# result CSVs under results/. Run after training.
+experiment: evaluate
+training:
+  num_workers: 2   # evaluation is inference-only; keep low for small runtimes (e.g. T4 has 2 CPUs)

@@ -1,0 +1,7 @@
+# Classifier-head refit / linear probing (accuracy intervention) + LP baselines.
+#   head_refit   : source-fine-tuned backbone, head refit on the other dataset (the intervention)
+#   imagenet     : frozen ImageNet backbone, head fit per dataset ("linearly solvable" probe, #2)
+#   plantvillage : frozen PlantVillage stage-1 backbone, head fit per dataset
+experiment: linear_probe
+linear_probe:
+  probes: [head_refit, imagenet, plantvillage]

@@ -1,0 +1,6 @@
+# Label-smoothing variant (training-time calibration intervention), compared
+# against post-hoc temperature scaling in evaluation.
+experiment: finetune
+run_name: finetune_label_smoothing   # distinct checkpoint namespace (baseline PV stage-1 is still reused)
+training:
+  label_smoothing: 0.1

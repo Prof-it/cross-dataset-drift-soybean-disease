@@ -1,0 +1,7 @@
+# Timing / calibration pass: ONE split seed x ONE init seed.
+# Runs each model once (16 soybean fine-tunes + 4 PlantVillage stage-1 pretrainings)
+# so you can measure per-run wall-clock on Colab before launching the full 3x3 job.
+# These checkpoints are a subset of the full run, so they are reused (not wasted).
+experiment: finetune
+seeds: [73]
+split_seeds: [73]

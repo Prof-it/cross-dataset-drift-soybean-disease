@@ -1,0 +1,4 @@
+# Matched-subsample control study (ASDID -> MH). Trains the model space on the
+# ASDID subsample matched to MH's per-class counts and total size (built by
+# `python scripts/prepare_data.py --matched`). One-directional.
+experiment: control_study

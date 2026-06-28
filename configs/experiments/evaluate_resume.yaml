@@ -1,0 +1,10 @@
+# Resumable evaluation: reuse the result CSVs already in results/ and only score
+# models that are missing from them (e.g. checkpoints that were corrupt before and
+# have since been re-trained), then merge. Use after fixing/re-training a few
+# checkpoints to avoid recomputing the whole grid. Point --results-dir at the
+# folder holding the previous CSVs.
+experiment: evaluate
+training:
+  num_workers: 2
+evaluate:
+  resume: true

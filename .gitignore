@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.ipynb_checkpoints/
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# Raw datasets and archives (large; not version-controlled).
+# Split CSVs and class_weights.json under data/ ARE tracked (reproducibility inputs).
+data/raw/
+data/
+# PlantVillage split is large (54k rows) and regenerated deterministically
+data/splits/plantvillage_splits_*.csv
+*.zip
+.pre_resized
+
+# Model artifacts and run outputs
+checkpoints/
+results/
+logs/
+runs/
+wandb/
+*.pt
+*.pth
+*.ckpt
+
+# Secrets (local only; .env.example is committed with dummy values)
+.env
+!.env.example
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

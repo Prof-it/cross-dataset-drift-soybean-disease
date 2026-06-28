@@ -1,0 +1,7 @@
+# Unweighted-loss ablation (feedback #6): isolate the effect of the weighted loss
+# on the transfer gap and calibration. ASDID is near-balanced, so this mainly
+# affects the MH-trained models, which are the comparison of interest.
+experiment: finetune
+run_name: finetune_unweighted   # distinct checkpoint namespace (baseline PV stage-1 is still reused)
+training:
+  class_weighting: false
