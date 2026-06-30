@@ -24,6 +24,7 @@ from src.viz.style import (
     CLASS_SHORT,
     DIVERGING_CMAP,
     DS_COLOURS,
+    GREY,
     save_figure,
     short_label,
 )
@@ -34,6 +35,14 @@ if TYPE_CHECKING:
 _WITHIN_C = DS_COLOURS["asdid"]
 _CROSS_C = DS_COLOURS["mh"]
 _RECOVER_C = ACCENT
+
+# Bright dataset palette for the two headline paper figures (the approved look,
+# matching the thesis transfer dumbbell). Kept local so the muted-editorial
+# identity in style.py still governs the exploratory figures below.
+ASDID_C = "#1f77b4"
+MH_C = "#e8920c"
+_REL_WITHIN = "#1f77b4"   # within-dataset reliability curve
+_REL_CROSS = "#d62728"    # cross-dataset reliability curve
 
 
 def _ordered_models(df: pd.DataFrame) -> list[tuple[str, str, str, str]]:
@@ -51,54 +60,57 @@ def _ordered_models(df: pd.DataFrame) -> list[tuple[str, str, str, str]]:
 # --------------------------------------------------------------------------- #
 # Transfer gap: dumbbell (within vs cross macro F1), ASDID | MH                #
 # --------------------------------------------------------------------------- #
-def transfer_gap(cfg: "Config", eval_results: pd.DataFrame, out_dir: str | Path) -> Path | None:
+def transfer_dumbbell(cfg: "Config", eval_results: pd.DataFrame, out_dir: str | Path) -> Path | None:
     ft = eval_results[eval_results["experiment"] == "finetune"]
     if ft.empty:
         return None
-    models = _ordered_models(ft)
-    if not models:
+    order = [(a, p) for a in ARCH_ORDER for p in ("direct", "twostage")]
+    labels = [short_label(a, p) for a, p in order]
+
+    fig, ax = plt.subplots(figsize=(11, 4.3))
+
+    def _block(src: str, x0: int, colour: str) -> bool:
+        drew = False
+        for i, (a, p) in enumerate(order):
+            sub = ft[ft["model_id"] == f"{a}_{p}_{src}"]
+            win = sub[sub["direction"] == "within"]["macro_f1"].to_numpy()
+            cro = sub[sub["direction"] == "cross"]["macro_f1"].to_numpy()
+            if len(win) == 0 or len(cro) == 0:
+                continue
+            drew = True
+            x = x0 + i
+            ax.plot([x, x], [cro.mean(), win.mean()], ls="--", color=colour, lw=1.1, alpha=0.8, zorder=1)
+            ax.scatter(np.full(len(win), x), win, marker="D", s=14, color=colour, alpha=0.30, edgecolors="none", zorder=2)
+            ax.scatter(np.full(len(cro), x), cro, marker="D", s=14, color=colour, alpha=0.30, edgecolors="none", zorder=2)
+            ax.scatter([x], [win.mean()], marker="o", s=70, color=colour, edgecolors="black", lw=0.8, zorder=3)
+            ax.scatter([x], [cro.mean()], marker="o", s=70, facecolors="white", edgecolors=colour, lw=1.8, zorder=3)
+        return drew
+
+    drew_a = _block("asdid", 0, ASDID_C)
+    drew_m = _block("mh", 9, MH_C)
+    if not (drew_a or drew_m):
+        plt.close(fig)
         return None
-
-    fig, ax = plt.subplots(figsize=(7.16, 4.2))
-    jitter = 0.12
-    for i, (mid, _arch, _path, ds) in enumerate(models):
-        colour = DS_COLOURS[ds]
-        w = ft[(ft["model_id"] == mid) & (ft["direction"] == "within")]["macro_f1"]
-        c = ft[(ft["model_id"] == mid) & (ft["direction"] == "cross")]["macro_f1"]
-        w_mean, c_mean = w.mean(), c.mean()
-        ax.plot([i, i], [w_mean, c_mean], color=colour, lw=1.0, ls="--", alpha=0.55, zorder=1)
-        # individual seeds: within slightly left, cross slightly right
-        ax.scatter(np.full(len(w), i - jitter), w, s=13, marker="D", color=colour,
-                   alpha=0.5, edgecolor="none", zorder=2)
-        ax.scatter(np.full(len(c), i + jitter), c, s=13, marker="D", facecolor="white",
-                   edgecolor=colour, linewidth=0.6, alpha=0.7, zorder=2)
-        # across-seed means
-        ax.scatter(i, w_mean, s=48, marker="o", color=colour, edgecolor="black", linewidth=0.5, zorder=4)
-        ax.scatter(i, c_mean, s=48, marker="o", facecolor="white", edgecolor=colour, linewidth=1.3, zorder=4)
-
-    n_asdid = sum(1 for _, _, _, ds in models if ds == "asdid")
-    ax.set_xticks(range(len(models)))
-    ax.set_xticklabels([short_label(a, p) for _, a, p, _ in models], rotation=45, ha="right")
+    ax.axvline(8, color=GREY, ls=":", lw=1)
+    ax.set_xticks(list(range(8)) + list(range(9, 17)))
+    ax.set_xticklabels(labels + labels, rotation=45, ha="right")
     ax.set_ylabel("Macro F1")
-    ax.set_ylim(-0.02, 1.06)
-    if 0 < n_asdid < len(models):
-        ax.axvline(n_asdid - 0.5, color="grey", lw=0.5, ls=":", zorder=1)
-        ax.text((n_asdid - 1) / 2, 1.04, "ASDID", ha="center", color=DS_COLOURS["asdid"], fontweight="bold")
-        ax.text(n_asdid + (len(models) - n_asdid - 1) / 2, 1.04, "MH", ha="center",
-                color=DS_COLOURS["mh"], fontweight="bold")
+    ax.set_ylim(0, 1.03)
+    ax.text(3.5, 1.06, "ASDID", color=ASDID_C, fontsize=14, fontweight="bold", ha="center")
+    ax.text(12.5, 1.06, "MH", color=MH_C, fontsize=14, fontweight="bold", ha="center")
     ax.grid(axis="y", ls=":", alpha=0.4)
 
     legend = [
-        Line2D([0], [0], marker="o", color="w", markerfacecolor=DS_COLOURS["asdid"],
-               markeredgecolor="black", markeredgewidth=0.5, markersize=8, label="Within (mean)"),
+        Line2D([0], [0], marker="o", color="w", markerfacecolor="grey",
+               markeredgecolor="black", markersize=9, label="Within (mean)"),
         Line2D([0], [0], marker="o", color="w", markerfacecolor="white",
-               markeredgecolor="0.3", markeredgewidth=1.3, markersize=8, label="Cross (mean)"),
-        Line2D([0], [0], marker="D", color="w", markerfacecolor="0.4", markersize=5,
-               alpha=0.6, label="Individual seed"),
+               markeredgecolor="grey", markeredgewidth=1.8, markersize=9, label="Cross (mean)"),
+        Line2D([0], [0], marker="D", color="w", markerfacecolor="grey", alpha=0.4,
+               markersize=7, label="Individual seed"),
     ]
-    ax.legend(handles=legend, loc="lower left", ncol=3, frameon=True)
+    ax.legend(handles=legend, loc="lower center", ncol=3, frameon=True, bbox_to_anchor=(0.5, -0.34))
     fig.tight_layout()
-    return save_figure(fig, Path(out_dir) / "transfer_gap", cfg)
+    return save_figure(fig, Path(out_dir) / "transfer_dumbbell", cfg)
 
 
 # --------------------------------------------------------------------------- #
@@ -150,38 +162,43 @@ def per_class_f1(cfg: "Config", eval_results: pd.DataFrame, out_dir: str | Path)
 # --------------------------------------------------------------------------- #
 # Calibration: reliability (within vs cross) + ECE bars                       #
 # --------------------------------------------------------------------------- #
-def calibration(cfg, eval_results: pd.DataFrame, reliability: pd.DataFrame | None, out_dir) -> Path | None:
+def calibration_by_dataset(cfg, eval_results: pd.DataFrame, reliability: pd.DataFrame | None, out_dir) -> Path | None:
     ft = eval_results[eval_results["experiment"] == "finetune"]
-    if ft.empty:
+    if ft.empty or reliability is None or reliability.empty:
         return None
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7.16, 3.4))
+    rel = reliability
+    if "experiment" in rel.columns:
+        rel = rel[rel["experiment"] == "finetune"]
+    rel = rel[rel["bin_count"] > 0]
 
-    if reliability is not None and not reliability.empty:
-        rel = reliability
-        if "experiment" in rel.columns:
-            rel = rel[rel["experiment"] == "finetune"]
-        for direction, color in (("within", _WITHIN_C), ("cross", _CROSS_C)):
-            sub = rel[rel["direction"] == direction]
+    fig, axes = plt.subplots(1, 2, figsize=(8.2, 3.5), sharey=True)
+    for ax, src, title, tcol in zip(axes, ("asdid", "mh"), ("ASDID", "MH"), (ASDID_C, MH_C)):
+        ax.plot([0, 1], [0, 1], ls="--", color=GREY, lw=1)
+        for direction, col, ls, face, lab in (
+            ("within", _REL_WITHIN, "-", _REL_WITHIN, "within"),
+            ("cross", _REL_CROSS, "--", "white", "cross"),
+        ):
+            sub = rel[(rel["train_dataset"] == src) & (rel["direction"] == direction)]
             confs, accs = [], []
             for _, rows in sub.groupby("bin"):
-                w = rows["bin_count"].sum()
-                if w == 0:
+                if rows["bin_count"].sum() == 0:
                     continue
                 confs.append(np.average(rows["bin_confidence"], weights=rows["bin_count"]))
                 accs.append(np.average(rows["bin_accuracy"], weights=rows["bin_count"]))
-            ax1.plot(confs, accs, marker="o", ms=4, label=direction, color=color)
-        ax1.plot([0, 1], [0, 1], ls="--", color="grey", lw=1)
-        ax1.set_xlim(0, 1); ax1.set_ylim(0, 1)
-        ax1.set_xlabel("Mean confidence"); ax1.set_ylabel("Accuracy")
-        ax1.set_title("Reliability"); ax1.legend()
-
-    ece = ft.groupby("direction")["ece"].mean()
-    cross_temp = ft[ft["direction"] == "cross"]["ece_temp"].mean()
-    bars = {"within": ece.get("within", np.nan), "cross": ece.get("cross", np.nan), "cross\n+ temp.": cross_temp}
-    ax2.bar(list(bars), list(bars.values()), color=[_WITHIN_C, _CROSS_C, _RECOVER_C], edgecolor="black", linewidth=0.5)
-    ax2.set_ylabel("ECE"); ax2.set_title("Calibration error")
+            ax.plot(confs, accs, ls=ls, color=col, lw=1.6, zorder=2)
+            ax.scatter(confs, accs, s=34, facecolors=face, edgecolors=col, lw=1.5, zorder=3, label=lab)
+        w_ece = ft[(ft["train_dataset"] == src) & (ft["direction"] == "within")]["ece"].mean()
+        c_ece = ft[(ft["train_dataset"] == src) & (ft["direction"] == "cross")]["ece"].mean()
+        ax.text(0.04, 0.93, f"within ECE {w_ece:.3f}\ncross ECE {c_ece:.3f}", fontsize=9.5, va="top",
+                bbox=dict(boxstyle="round", fc="white", ec=GREY, alpha=0.9))
+        ax.set_title(title, color=tcol, fontweight="bold")
+        ax.set_xlabel("Confidence")
+        ax.set_xlim(0, 1); ax.set_ylim(0, 1)
+        ax.grid(ls=":", alpha=0.35)
+    axes[0].set_ylabel("Accuracy")
+    axes[0].legend(loc="lower right", frameon=True)
     fig.tight_layout()
-    return save_figure(fig, Path(out_dir) / "calibration", cfg)
+    return save_figure(fig, Path(out_dir) / "calibration_by_dataset", cfg)
 
 
 # --------------------------------------------------------------------------- #

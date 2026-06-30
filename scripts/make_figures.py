@@ -45,8 +45,8 @@ def main() -> None:
     out = results / "figures"
 
     produced = [
-        figures.transfer_gap(cfg, eval_results, out),
-        figures.calibration(cfg, eval_results, reliability, out),
+        figures.transfer_dumbbell(cfg, eval_results, out),
+        figures.calibration_by_dataset(cfg, eval_results, reliability, out),
         figures.intervention_recovery(cfg, eval_results, out),
         figures.per_class_f1(cfg, eval_results, out),
         figures.decomposition(cfg, decomp, out),

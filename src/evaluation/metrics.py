@@ -121,6 +121,15 @@ def expected_calibration_error(y_true: np.ndarray, probs: np.ndarray, n_bins: in
     return float(np.sum(counts * np.abs(acc - conf)) / total)
 
 
+def ece_across_bins(y_true: np.ndarray, probs: np.ndarray, bin_counts: tuple[int, ...] = (5, 10, 15, 20)) -> dict:
+    """ECE at several equal-width bin counts, to check robustness to the bin choice.
+
+    Returns ``{"ece_b5": ..., "ece_b10": ..., ...}``. Used by the ECE-robustness
+    analysis to confirm the calibration asymmetry is not an artefact of the 10-bin default.
+    """
+    return {f"ece_b{n}": expected_calibration_error(y_true, probs, n) for n in bin_counts}
+
+
 def reliability_curve(y_true: np.ndarray, probs: np.ndarray, n_bins: int = 10) -> dict:
     """Per-bin accuracy, confidence, and counts for a reliability diagram."""
     acc, conf, counts = _bin_stats(y_true, probs, n_bins)

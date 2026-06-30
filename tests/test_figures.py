@@ -25,10 +25,10 @@ def _finetune_rows():
     return pd.DataFrame(rows)
 
 
-def test_transfer_gap_renders(tmp_path):
+def test_transfer_dumbbell_renders(tmp_path):
     cfg = load_config()
     set_style(cfg)
-    out = figures.transfer_gap(cfg, _finetune_rows(), tmp_path)
+    out = figures.transfer_dumbbell(cfg, _finetune_rows(), tmp_path)
     assert out is not None and out.exists() and out.suffix == f".{cfg.figures.format}"
 
 
@@ -36,4 +36,4 @@ def test_missing_data_returns_none(tmp_path):
     cfg = load_config()
     set_style(cfg)
     empty = pd.DataFrame(columns=["experiment"])
-    assert figures.transfer_gap(cfg, empty, tmp_path) is None
+    assert figures.transfer_dumbbell(cfg, empty, tmp_path) is None
