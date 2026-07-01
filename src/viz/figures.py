@@ -281,24 +281,29 @@ def confusion_matrices(cfg, confusions: pd.DataFrame | None, out_dir) -> Path | 
     if not dirs:
         return None
 
-    fig, axes = plt.subplots(1, len(dirs), figsize=(3.6 * len(dirs), 3.4), squeeze=False)
+    # Stacked vertically so each matrix spans the full column width (readable in print).
+    n = len(dirs)
+    fig, axes = plt.subplots(n, 1, figsize=(3.15, 2.4 * n + 0.4), squeeze=False)
     im = None
-    for ax, (s, t) in zip(axes[0], dirs):
+    for i, ((s, t), ax) in enumerate(zip(dirs, axes[:, 0])):
         sub = df[(df["train_dataset"] == s) & (df["eval_dataset"] == t)]
         mat = (sub.pivot_table(index="true_class", columns="pred_class", values="count", aggfunc="sum")
                .reindex(index=classes, columns=classes).fillna(0.0))
         norm = mat.div(mat.sum(axis=1).replace(0, np.nan), axis=0).fillna(0.0).to_numpy()
         im = ax.imshow(norm, cmap="Blues", vmin=0.0, vmax=1.0, aspect="equal")
-        ax.set_xticks(range(len(classes))); ax.set_xticklabels(labels, rotation=45, ha="right")
-        ax.set_yticks(range(len(classes))); ax.set_yticklabels(labels)
-        ax.set_xlabel("Predicted")
-        ax.set_title(f"{s.upper()}→{t.upper()}", color=DS_COLOURS[s], fontweight="bold")
+        ax.set_yticks(range(len(classes))); ax.set_yticklabels(labels, fontsize=8)
+        ax.set_ylabel("True", fontsize=8.5)
+        ax.set_xticks(range(len(classes)))
+        ax.set_title(f"{s.upper()}→{t.upper()}", color=(ASDID_C if s == "asdid" else MH_C),
+                     fontweight="bold", fontsize=9.5, pad=4)
+        last = i == n - 1
+        ax.set_xticklabels(labels if last else [""] * len(classes), fontsize=8)
+        if last:
+            ax.set_xlabel("Predicted", fontsize=8.5)
         for r in range(len(classes)):
             for c in range(len(classes)):
                 v = norm[r, c]
-                ax.text(c, r, f"{v:.2f}", ha="center", va="center", fontsize=9,
-                        color="white" if v > 0.5 else "black")
-    axes[0][0].set_ylabel("True")
-    fig.colorbar(im, ax=axes[0].tolist(), fraction=0.045, pad=0.03, label="Row-normalized share")
-    fig.suptitle("Cross-dataset confusion (row-normalized)", y=1.02)
+                ax.text(c, r, f"{v:.2f}", ha="center", va="center", fontsize=9.5,
+                        color="white" if v > 0.55 else "black")
+    fig.colorbar(im, ax=axes[:, 0].tolist(), fraction=0.045, pad=0.04, label="Row-normalized share")
     return save_figure(fig, Path(out_dir) / "confusion_matrices", cfg)
