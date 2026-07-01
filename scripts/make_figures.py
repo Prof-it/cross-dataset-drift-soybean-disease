@@ -42,6 +42,7 @@ def main() -> None:
         raise SystemExit(f"missing {results / 'eval_results.csv'}; run the 'evaluate' experiment first")
     reliability = _read(results / "reliability.csv")
     decomp = _read(results / "decomposition.csv")
+    confusions = _read(results / "confusions.csv")
     out = results / "figures"
 
     produced = [
@@ -50,6 +51,7 @@ def main() -> None:
         figures.intervention_recovery(cfg, eval_results, out),
         figures.per_class_f1(cfg, eval_results, out),
         figures.decomposition(cfg, decomp, out),
+        figures.confusion_matrices(cfg, confusions, out),
     ]
     for path in produced:
         if path is not None:

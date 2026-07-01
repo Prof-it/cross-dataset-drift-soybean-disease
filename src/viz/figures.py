@@ -61,54 +61,49 @@ def _ordered_models(df: pd.DataFrame) -> list[tuple[str, str, str, str]]:
 # Transfer gap: dumbbell (within vs cross macro F1), ASDID | MH                #
 # --------------------------------------------------------------------------- #
 def transfer_dumbbell(cfg: "Config", eval_results: pd.DataFrame, out_dir: str | Path) -> Path | None:
+    """Single-column paired dumbbell: for each arch x path, ASDID (blue, left) and
+    MH (orange, right) side by side, filled = within, open = cross. y starts at 0.4."""
     ft = eval_results[eval_results["experiment"] == "finetune"]
     if ft.empty:
         return None
-    order = [(a, p) for a in ARCH_ORDER for p in ("direct", "twostage")]
-    labels = [short_label(a, p) for a, p in order]
+    groups = [(a, p) for a in ARCH_ORDER for p in ("direct", "twostage")]
+    labels = [short_label(a, p) for a, p in groups]
 
-    fig, ax = plt.subplots(figsize=(11, 4.3))
-
-    def _block(src: str, x0: int, colour: str) -> bool:
-        drew = False
-        for i, (a, p) in enumerate(order):
+    fig, ax = plt.subplots(figsize=(3.5, 3.0))
+    off = 0.19
+    drew = False
+    for gi, (a, p) in enumerate(groups):
+        for src, dx, colour in (("asdid", -off, ASDID_C), ("mh", off, MH_C)):
             sub = ft[ft["model_id"] == f"{a}_{p}_{src}"]
             win = sub[sub["direction"] == "within"]["macro_f1"].to_numpy()
             cro = sub[sub["direction"] == "cross"]["macro_f1"].to_numpy()
             if len(win) == 0 or len(cro) == 0:
                 continue
             drew = True
-            x = x0 + i
-            ax.plot([x, x], [cro.mean(), win.mean()], ls="--", color=colour, lw=1.1, alpha=0.8, zorder=1)
-            ax.scatter(np.full(len(win), x), win, marker="D", s=14, color=colour, alpha=0.30, edgecolors="none", zorder=2)
-            ax.scatter(np.full(len(cro), x), cro, marker="D", s=14, color=colour, alpha=0.30, edgecolors="none", zorder=2)
-            ax.scatter([x], [win.mean()], marker="o", s=70, color=colour, edgecolors="black", lw=0.8, zorder=3)
-            ax.scatter([x], [cro.mean()], marker="o", s=70, facecolors="white", edgecolors=colour, lw=1.8, zorder=3)
-        return drew
-
-    drew_a = _block("asdid", 0, ASDID_C)
-    drew_m = _block("mh", 9, MH_C)
-    if not (drew_a or drew_m):
+            x = gi + dx
+            ax.plot([x, x], [cro.mean(), win.mean()], ls="--", color=colour, lw=1.0, alpha=0.85, zorder=1)
+            ax.scatter(np.full(len(win), x), win, marker="o", s=5, color=colour, alpha=0.25, edgecolors="none", zorder=2)
+            ax.scatter(np.full(len(cro), x), cro, marker="o", s=5, color=colour, alpha=0.25, edgecolors="none", zorder=2)
+            ax.scatter([x], [win.mean()], marker="o", s=26, color=colour, edgecolors="black", lw=0.5, zorder=3)
+            ax.scatter([x], [cro.mean()], marker="o", s=26, facecolors="white", edgecolors=colour, lw=1.2, zorder=3)
+    if not drew:
         plt.close(fig)
         return None
-    ax.axvline(8, color=GREY, ls=":", lw=1)
-    ax.set_xticks(list(range(8)) + list(range(9, 17)))
-    ax.set_xticklabels(labels + labels, rotation=45, ha="right")
+    ax.set_xticks(range(len(groups)))
+    ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=8)
     ax.set_ylabel("Macro F1")
-    ax.set_ylim(0, 1.03)
-    ax.text(3.5, 1.06, "ASDID", color=ASDID_C, fontsize=14, fontweight="bold", ha="center")
-    ax.text(12.5, 1.06, "MH", color=MH_C, fontsize=14, fontweight="bold", ha="center")
+    ax.set_ylim(0.4, 1.03)
+    ax.set_xlim(-0.6, len(groups) - 0.4)
     ax.grid(axis="y", ls=":", alpha=0.4)
 
     legend = [
-        Line2D([0], [0], marker="o", color="w", markerfacecolor="grey",
-               markeredgecolor="black", markersize=9, label="Within (mean)"),
-        Line2D([0], [0], marker="o", color="w", markerfacecolor="white",
-               markeredgecolor="grey", markeredgewidth=1.8, markersize=9, label="Cross (mean)"),
-        Line2D([0], [0], marker="D", color="w", markerfacecolor="grey", alpha=0.4,
-               markersize=7, label="Individual seed"),
+        Line2D([0], [0], marker="o", color="w", markerfacecolor=ASDID_C, markeredgecolor=ASDID_C, markersize=6, label="ASDID"),
+        Line2D([0], [0], marker="o", color="w", markerfacecolor=MH_C, markeredgecolor=MH_C, markersize=6, label="MH"),
+        Line2D([0], [0], marker="o", color="w", markerfacecolor="grey", markeredgecolor="black", markersize=6, label="within"),
+        Line2D([0], [0], marker="o", color="w", markerfacecolor="white", markeredgecolor="grey", markeredgewidth=1.2, markersize=6, label="cross"),
     ]
-    ax.legend(handles=legend, loc="lower center", ncol=3, frameon=True, bbox_to_anchor=(0.5, -0.34))
+    ax.legend(handles=legend, loc="lower left", ncol=2, frameon=True, fontsize=6.5,
+              handletextpad=0.3, columnspacing=0.8)
     fig.tight_layout()
     return save_figure(fig, Path(out_dir) / "transfer_dumbbell", cfg)
 
@@ -260,3 +255,50 @@ def decomposition(cfg, decomposition_df: pd.DataFrame | None, out_dir) -> Path |
     ax.grid(axis="y", ls=":", alpha=0.4)
     fig.tight_layout()
     return save_figure(fig, Path(out_dir) / "decomposition", cfg)
+
+
+# --------------------------------------------------------------------------- #
+# Confusion matrices: cross-dataset, row-normalized, one per direction         #
+# --------------------------------------------------------------------------- #
+def confusion_matrices(cfg, confusions: pd.DataFrame | None, out_dir) -> Path | None:
+    """Row-normalized cross-dataset confusion matrices, one per transfer direction.
+
+    Shows which class each true class is predicted as under cross-dataset transfer,
+    summed over architectures and pretraining paths. Makes the frogeye leaf spot
+    failure concrete: for ASDID-trained models a large share of the target rust is
+    predicted as frogeye, which is what collapses frogeye precision. Expects the
+    long-format table from ``compute_confusions.py``.
+    """
+    if confusions is None or confusions.empty:
+        return None
+    df = confusions[confusions["direction"] == "cross"]
+    if df.empty:
+        return None
+    classes = list(CLASS_SHORT)
+    labels = [CLASS_SHORT[c] for c in classes]
+    dirs = [(s, t) for s in ("asdid", "mh") for t in ("asdid", "mh")
+            if s != t and not df[(df["train_dataset"] == s) & (df["eval_dataset"] == t)].empty]
+    if not dirs:
+        return None
+
+    fig, axes = plt.subplots(1, len(dirs), figsize=(3.6 * len(dirs), 3.4), squeeze=False)
+    im = None
+    for ax, (s, t) in zip(axes[0], dirs):
+        sub = df[(df["train_dataset"] == s) & (df["eval_dataset"] == t)]
+        mat = (sub.pivot_table(index="true_class", columns="pred_class", values="count", aggfunc="sum")
+               .reindex(index=classes, columns=classes).fillna(0.0))
+        norm = mat.div(mat.sum(axis=1).replace(0, np.nan), axis=0).fillna(0.0).to_numpy()
+        im = ax.imshow(norm, cmap="Blues", vmin=0.0, vmax=1.0, aspect="equal")
+        ax.set_xticks(range(len(classes))); ax.set_xticklabels(labels, rotation=45, ha="right")
+        ax.set_yticks(range(len(classes))); ax.set_yticklabels(labels)
+        ax.set_xlabel("Predicted")
+        ax.set_title(f"{s.upper()}→{t.upper()}", color=DS_COLOURS[s], fontweight="bold")
+        for r in range(len(classes)):
+            for c in range(len(classes)):
+                v = norm[r, c]
+                ax.text(c, r, f"{v:.2f}", ha="center", va="center", fontsize=9,
+                        color="white" if v > 0.5 else "black")
+    axes[0][0].set_ylabel("True")
+    fig.colorbar(im, ax=axes[0].tolist(), fraction=0.045, pad=0.03, label="Row-normalized share")
+    fig.suptitle("Cross-dataset confusion (row-normalized)", y=1.02)
+    return save_figure(fig, Path(out_dir) / "confusion_matrices", cfg)
