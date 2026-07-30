@@ -1,11 +1,10 @@
 # cross-dataset-drift-soybean-disease
 
-Code for two papers on the cross-dataset robustness of soybean disease
+Code for the paper on the cross-dataset robustness of soybean disease
 classifiers under distribution shift:
 
-- **Paper 1 (ICSIE, agriculture):** cross-dataset transfer, a control study, and
+- **ICSIE (agriculture section):** cross-dataset transfer, a control study, and
   lightweight interventions (classifier-head refit, calibration corrections).
-- **Paper 2 (ETECOM, CV/XAI):** explainability and failure analysis *(added later).*
 
 A single, config-driven PyTorch package. The reusable core (`data`, `models`,
 `training`, `evaluation`) is shared by both papers; paper-specific pipelines live
