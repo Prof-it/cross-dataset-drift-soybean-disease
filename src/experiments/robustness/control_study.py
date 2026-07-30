@@ -1,4 +1,4 @@
-"""Experiment: the matched-subsample control study (Paper 1).
+"""Experiment: the matched-subsample control study.
 
 Tests whether class distribution and sample size, rather than acquisition context,
 account for any cross-dataset change in performance. ASDID is resampled to MH's

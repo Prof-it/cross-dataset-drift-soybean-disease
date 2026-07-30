@@ -1,5 +1,5 @@
 # Base configuration: reproducibility, model space, training, evaluation.
-# Values follow the Paper 1 protocol (manuscript Table II). Experiment-specific
+# Values follow the manuscript protocol (Table II). Experiment-specific
 # files under configs/experiments/ override individual keys; later files win.
 
 # Reproducibility ------------------------------------------------------------
@@ -53,7 +53,7 @@ evaluation:
   bootstrap_iterations: 10000   # bias-corrected and accelerated (BCa) confidence intervals
   ece_bins: 10                  # expected calibration error
 
-# Figures (shared plotting style for both papers; applied via src.viz) --------
+# Figures (shared plotting style; applied via src.viz) --------
 figures:
   dpi: 300
   format: png                   # PNG for paper figures (sharp lines/text, no artifacts)

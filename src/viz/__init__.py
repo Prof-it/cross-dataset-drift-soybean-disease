@@ -1,1 +1,1 @@
-"""Shared plotting style and palettes for both papers."""
+"""Shared plotting style and palettes."""

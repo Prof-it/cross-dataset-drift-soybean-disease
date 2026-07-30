@@ -1,4 +1,4 @@
-"""Experiment: bidirectional evaluation and result assembly (Paper 1).
+"""Experiment: bidirectional evaluation and result assembly.
 
 Turns trained checkpoints into the numbers the paper reports. For each finetune
 model it computes within- and cross-dataset metrics, calibration before and after

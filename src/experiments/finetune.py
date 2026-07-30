@@ -1,7 +1,7 @@
-"""Train the model space (shared by both papers).
+"""Train the model space.
 
-Produces the trained checkpoints that both papers analyze, so this is
-paper-agnostic and lives at the ``experiments/`` level. Full fine-tuning of the
+Produces the trained checkpoints the analyses consume, so this is
+experiment-agnostic and lives at the ``experiments/`` level. Full fine-tuning of the
 model space (architectures x training_paths x source_datasets) over the
 configured training and split seeds. The unweighted-MH ablation and the
 label-smoothing variant are config overrides of the same driver

@@ -1,4 +1,4 @@
-"""Figure styling shared by both papers — "muted editorial" identity.
+"""Figure styling — "muted editorial" identity.
 
 One place that defines how every figure looks. A calm, desaturated palette
 (slate blue for ASDID, warm clay for MH, sage as the positive/recovery accent),

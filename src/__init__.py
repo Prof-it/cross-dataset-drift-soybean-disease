@@ -1,6 +1,6 @@
 """Cross-dataset robustness of soybean disease classifiers (paper code).
 
-A small, config-driven PyTorch package shared by both papers. The reusable core
+A small, config-driven PyTorch package. The reusable core
 (``data``, ``models``, ``training``, ``evaluation``) is independent of any single
 experiment; paper-specific pipelines live under :mod:`src.experiments`.
 """

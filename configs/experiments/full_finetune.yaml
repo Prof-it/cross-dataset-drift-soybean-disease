@@ -1,4 +1,4 @@
-# Paper 1 main run: full fine-tuning of the sixteen models.
+# Main run: full fine-tuning of the sixteen models.
 # No overrides beyond the defaults; trains architectures x training_paths x
 # source_datasets over all seeds and split_seeds. The control study and
 # interventions build on these checkpoints.

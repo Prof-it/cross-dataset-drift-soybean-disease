@@ -1,4 +1,4 @@
-"""Experiment: classifier-head refit / linear probing (Paper 1).
+"""Experiment: classifier-head refit / linear probing.
 
 The accuracy-oriented intervention and the "linearly solvable" baselines:
 
