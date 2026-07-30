@@ -92,3 +92,45 @@ def aggregate_over_seeds(
         for col in grouped.columns.to_flat_index()
     ]
     return grouped
+
+
+def aggregate_with_ci(
+    df: "pd.DataFrame",
+    group_cols: list[str],
+    metric_cols: list[str],
+    *,
+    n_iterations: int = 10_000,
+    ci: float = 0.95,
+    seed: int = 73,
+    min_runs: int = 3,
+) -> "pd.DataFrame":
+    """:func:`aggregate_over_seeds` plus a BCa interval per group and metric.
+
+    Adds ``{metric}_ci_low`` / ``{metric}_ci_high`` beside the ``_mean`` / ``_std``
+    / ``_n`` columns. Resampling is over the *rows* of each group, i.e. over runs,
+    so the interval expresses variation across initialization seeds and data
+    partitions rather than sampling error inside one test split.
+
+    Groups with fewer than ``min_runs`` rows, or with no variance at all, get NaN
+    bounds instead of a fabricated interval. BCa estimates its bias-correction and
+    acceleration by jackknife, and neither is meaningful on a couple of points or
+    on a constant sample -- reporting a number there would overstate what the data
+    supports. ``seed`` fixes the resampling so the interval is reproducible.
+    """
+    import pandas as pd
+
+    base = aggregate_over_seeds(df, group_cols, metric_cols)
+    rows: list[dict] = []
+    for key, group in df.groupby(group_cols, sort=False):
+        keys = key if isinstance(key, tuple) else (key,)
+        record = dict(zip(group_cols, keys, strict=True))
+        for metric in metric_cols:
+            values = group[metric].dropna().to_numpy(dtype=float)
+            low = high = float("nan")
+            if len(values) >= min_runs and np.ptp(values) > 0:
+                interval = bootstrap_ci(values, n_iterations=n_iterations, ci=ci, seed=seed)
+                low, high = interval["ci_lower"], interval["ci_upper"]
+            record[f"{metric}_ci_low"] = low
+            record[f"{metric}_ci_high"] = high
+        rows.append(record)
+    return base.merge(pd.DataFrame(rows), on=group_cols, how="left")
