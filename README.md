@@ -7,7 +7,7 @@ classifiers under distribution shift:
   lightweight interventions (classifier-head refit, calibration corrections).
 
 A single, config-driven PyTorch package. The reusable core (`data`, `models`,
-`training`, `evaluation`) is shared by both papers; paper-specific pipelines live
+`training`, `evaluation`) is shared across experiments; experiment-specific pipelines live
 under `src/experiments/`.
 
 ## Layout
@@ -20,10 +20,10 @@ src/
   models/       model factory, classifier-head reinit, backbone freeze (linear probing)
   training/     training engine (AMP, plateau LR, early stopping, resumable checkpoints)
   evaluation/   metrics (accuracy, macro F1, ECE), calibration, bootstrap CIs
-  viz/          shared figure style and per-class palette (both papers)
+  viz/          shared figure style and per-class palette
   experiments/
-    finetune.py train the 16 models (shared by both papers)
-    robustness/ Paper 1: control study, interventions, cross-dataset evaluation
+    finetune.py train the 16 models
+    robustness/ control study, interventions, cross-dataset evaluation
   colab.py      Colab helpers (mounting, dataset caching, pre-resize, path resolution)
   utils/        I/O and logging helpers
 scripts/        thin command-line entry points
@@ -88,7 +88,7 @@ committed `.env.example` documents the keys.
 
 Never commit `.env` or real tokens.
 
-## Reproducing Paper 1
+## Reproducing the paper
 
 Install the package first (`pip install -e .`), then:
 
@@ -122,6 +122,25 @@ python scripts/run_experiment.py configs/experiments/evaluate.yaml \
 python scripts/aggregate_results.py
 python scripts/make_figures.py
 ```
+
+### Input-level probes (optional)
+
+Two inference-only checks on what the classifier keys on. They re-score the
+existing fine-tune checkpoints, so run them after training; neither retrains.
+The background probe replaces the image background with a flat fill and needs
+hand-annotated leaf masks under `data/masks/`; the frequency probe applies a
+Gaussian low-pass and needs no masks.
+
+```bash
+python scripts/run_experiment.py configs/experiments/background_intervention.yaml
+python scripts/run_experiment.py configs/experiments/frequency_intervention.yaml
+python scripts/compute_intervention_stats.py                      # mean change + paired Wilcoxon
+```
+
+Masks are prepared with `scripts/select_annotation_batch.py` (picks held-out
+images to annotate), LabelMe, then `scripts/convert_masks.py` (JSON → binary
+PNG); `scripts/fix_mask_orientation.py` corrects masks rotated relative to
+their image.
 
 ## License
 
