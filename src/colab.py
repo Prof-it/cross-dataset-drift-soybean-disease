@@ -180,8 +180,18 @@ def pre_resize_images(root: str | Path, short_side: int = 512, marker: str = ".p
     logger.info("pre-resized %d images", resized)
 
 
-def resolve_paths(local_root: str | Path, drive_root: str | Path) -> "Paths":
-    """Build a ``Paths`` with data on local SSD and artifacts persisted on Drive."""
+def resolve_paths(
+    local_root: str | Path,
+    drive_root: str | Path,
+    masks_dir: str | Path | None = None,
+) -> "Paths":
+    """Build a ``Paths`` with data on local SSD and artifacts persisted on Drive.
+
+    ``masks_dir`` defaults to ``<drive_root>/data/masks``. The foreground masks are
+    not version-controlled, so they travel with the datasets rather than with the
+    code and the sparse checkout never carries them. They are read once into an
+    in-process cache, so serving them straight from Drive is fine.
+    """
     from src.config import Paths
 
     local_root = Path(local_root)
@@ -193,6 +203,7 @@ def resolve_paths(local_root: str | Path, drive_root: str | Path) -> "Paths":
         checkpoints_dir=drive_root / "checkpoints",
         results_dir=drive_root / "results",
         logs_dir=drive_root / "logs",
+        masks_dir=Path(masks_dir) if masks_dir else drive_root / "data" / "masks",
     )
 
 

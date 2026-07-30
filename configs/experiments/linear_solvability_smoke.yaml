@@ -1,0 +1,11 @@
+# Fast sanity check for the linear-solvability experiment: pixel floors only,
+# single split/seed, no backbone feature extraction (CPU-only, ~minutes).
+# Validates data loading, splits, and scoring before the full GPU run.
+#   python scripts/run_experiment.py configs/experiments/linear_solvability_smoke.yaml
+experiment: linear_solvability
+seeds: [73]
+split_seeds: [73]
+linear_solvability:
+  feature_types: [raw_pixel, random_proj]
+  pixel_size: 32
+  proj_dim: 512

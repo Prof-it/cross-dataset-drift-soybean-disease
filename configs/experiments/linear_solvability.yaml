@@ -1,0 +1,19 @@
+# Linear-solvability spectrum (Prof. Lu feedback #2): is the cross-dataset task
+# merely "linearly solvable" with generic features, or do the ImageNet features
+# carry disease-relevant signal?
+#
+# Fits the SAME multinomial logistic head on fixed feature extractors and scores
+# within/cross macro F1, so the comparison is apples-to-apples:
+#   raw_pixel    : flattened downsampled RGB pixels           (trivial floor)
+#   random_proj  : Gaussian random projection of those pixels (trivial floor)
+#   random_init  : frozen randomly-initialised backbone       (architecture only)
+#   imagenet     : frozen ImageNet-pretrained backbone        (reproduces thesis LP-on-ImageNet)
+#
+# Runs over cfg.split_seeds x cfg.seeds x cfg.architectures x source_datasets
+# (default.yaml: splits [73,7,21] x seeds [73,7,21], 4 archs, asdid/mh).
+# Output: results/linear_solvability.csv
+experiment: linear_solvability
+linear_solvability:
+  feature_types: [raw_pixel, random_proj, random_init, imagenet]
+  pixel_size: 32    # RGB pixels per side for the raw-pixel / random-projection floors
+  proj_dim: 512     # target dimensionality of the random projection

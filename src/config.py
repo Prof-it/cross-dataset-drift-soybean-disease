@@ -71,7 +71,7 @@ class Evaluation:
 
 @dataclass(frozen=True)
 class Figures:
-    """Shared plotting style (used by both papers via ``src.viz``)."""
+    """Shared plotting style (applied via ``src.viz``)."""
 
     dpi: int
     format: str
@@ -127,6 +127,15 @@ class Paths:
     checkpoints_dir: Path
     results_dir: Path
     logs_dir: Path
+    # Foreground masks for the background intervention. Not version-controlled
+    # (see .gitignore) and read by that one experiment, so the field is optional:
+    # left unset it lands beside the split CSVs, which keeps a retargeted ``Paths``
+    # (Colab, tests) self-consistent instead of silently pointing back at the repo.
+    masks_dir: Path | None = None
+
+    def __post_init__(self) -> None:
+        if self.masks_dir is None:
+            self.masks_dir = Path(self.splits_dir).parent / "masks"
 
     @classmethod
     def default(cls, root: Path = REPO_ROOT) -> "Paths":
@@ -137,6 +146,7 @@ class Paths:
             checkpoints_dir=root / "checkpoints",
             results_dir=root / "results",
             logs_dir=root / "logs",
+            masks_dir=root / "data" / "masks",
         )
 
     def with_overrides(self, **overrides: "str | Path | None") -> "Paths":

@@ -1,0 +1,38 @@
+# Background-replacement intervention: does the cross-dataset decision rule lean
+# on background context that does not transfer?
+#
+# Re-scores the trained fine-tune checkpoints on the hand-annotated image subset
+# under three conditions -- the unedited image, and the image with every
+# background pixel (foreground mask == 0) replaced by a uniform fill. Masks are
+# read from paths.masks_dir (default data/masks/; see ANNOTATION_PROTOCOL.md).
+#
+# Replacing the background is itself an out-of-distribution edit, so a model that
+# gained nothing from background context should get worse, not better. Read the
+# cross-dataset gain against the within-dataset cost.
+#
+# Output: results/background_intervention.csv (+ _per_image.csv)
+experiment: background_intervention
+
+# Single partition, all three initialization seeds (16 models x 3 seeds = 48 runs).
+#
+# An annotated image is only usable for the WITHIN-dataset arm if it was held out
+# of that run's training data, and "held out" is a property of (image, split seed):
+# an image in the test split under one seed is in the training split under another.
+# A set held out under all three seeds is too small to use (single digits in some
+# classes), so this experiment fixes the partition and varies only the
+# initialization seed -- the same design the thesis used. The cross-dataset arm is
+# unaffected either way: a model never trains on the other dataset at all.
+#
+# scripts/select_annotation_batch.py picks the images to annotate for this seed.
+# Change it here and re-run that script if you move to another partition.
+split_seeds: [73]
+
+background_intervention:
+  fills:                       # RGB fill for the background, one condition each
+    grey: [127, 127, 127]
+    black: [0, 0, 0]
+  source_run_name: finetune    # checkpoint namespace to score (see finetune.run)
+  write_per_image: true        # small here (~65k rows); enables the paired tests
+  batch_size: 32               # inference-only; independent of the training batch
+training:
+  num_workers: 2               # crops are cached in-process, so workers barely matter

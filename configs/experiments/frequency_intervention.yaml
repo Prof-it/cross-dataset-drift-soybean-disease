@@ -1,0 +1,21 @@
+# Frequency low-pass intervention: the control for the background result.
+#
+# Re-scores the trained fine-tune checkpoints on the full test split of both
+# datasets under the unedited image and a Gaussian low-pass filter at each sigma.
+# Blur removes fine texture without removing any semantic region and needs no
+# annotation, so a null result here says the background effect is specific to
+# *what* was removed rather than to *that something* was removed.
+#
+# Sigmas are in source-image pixels and the filter is applied before the resize /
+# center crop, matching the thesis protocol (kernel = 6*sigma + 1).
+#
+# Output: results/frequency_intervention.csv
+experiment: frequency_intervention
+frequency_intervention:
+  sigmas: [2, 4, 8]
+  split: test                  # full held-out split; no masks needed
+  source_run_name: finetune
+  write_per_image: false       # ~400k rows at the full grid; opt in if needed
+  batch_size: 32
+training:
+  num_workers: 2
