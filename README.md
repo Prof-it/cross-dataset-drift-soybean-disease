@@ -145,3 +145,20 @@ their image.
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+## 📚 Publication
+
+This repository accompanies the following research contribution:
+
+* **Stahl, M. and Lu, T. (2026).** *Cross-Dataset Robustness of Deep Learning Models for Soybean Disease Detection Under Distribution Shift.* The 1st International Conference on Sustainable Innovations in Engineering (ICSIE 2026), Jordan / Hybrid, 7–9 October 2026. **Camera-ready.**
+
+```bibtex
+@inproceedings{stahl_lu_2026_soybean,
+  author    = {Stahl, Maximilian and Lu, Tianxiang},
+  title     = {Cross-Dataset Robustness of Deep Learning Models for Soybean Disease Detection Under Distribution Shift},
+  booktitle = {The 1st International Conference on Sustainable Innovations in Engineering (ICSIE 2026)},
+  year      = {2026},
+  address   = {Jordan},
+  note      = {Hybrid conference, 7--9 October 2026. Camera-ready}
+}
+```
